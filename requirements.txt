@@ -1,0 +1,11 @@
+﻿streamlit
+torch
+torchvision
+timm
+numpy
+Pillow
+PyWavelets
+opencv-python
+scikit-learn
+matplotlib
+scipy

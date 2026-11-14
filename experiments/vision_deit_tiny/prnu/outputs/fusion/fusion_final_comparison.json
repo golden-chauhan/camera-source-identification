@@ -1,0 +1,25 @@
+{
+    "test_images": 500,
+    "validation_split": "validation",
+    "selected_prnu_weight": 0.35000000000000003,
+    "selected_deit_weight": 0.6499999999999999,
+    "selection_metric": "validation_macro_f1",
+    "deit": {
+        "accuracy": 0.806,
+        "top3_accuracy": 0.954,
+        "macro_f1": 0.7730497571733225,
+        "weighted_f1": 0.8016002204263749
+    },
+    "prnu": {
+        "accuracy": 0.874,
+        "top3_accuracy": 0.908,
+        "macro_f1": 0.8523769792750577,
+        "weighted_f1": 0.8579427889462952
+    },
+    "fusion": {
+        "accuracy": 0.962,
+        "top3_accuracy": 0.992,
+        "macro_f1": 0.9584287330772301,
+        "weighted_f1": 0.961310914292933
+    }
+}

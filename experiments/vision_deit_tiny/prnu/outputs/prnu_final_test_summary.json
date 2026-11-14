@@ -1,0 +1,14 @@
+{
+    "evaluation": "PRNU existing held-out test split",
+    "split": "test",
+    "fingerprints": 22,
+    "test_images_requested": 500,
+    "successful_images": 500,
+    "failed_images": 0,
+    "top1_correct": 437,
+    "top1_accuracy": 0.874,
+    "top3_correct": 454,
+    "top3_accuracy": 0.908,
+    "macro_top1_accuracy": 0.873220672665753,
+    "devices_evaluated": 22
+}

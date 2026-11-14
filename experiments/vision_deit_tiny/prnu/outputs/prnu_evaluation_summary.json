@@ -1,0 +1,13 @@
+{
+    "evaluation": "PRNU natural-image pilot",
+    "images_per_device_requested": 10,
+    "random_seed": 42,
+    "fingerprints": 22,
+    "successful_images": 219,
+    "failed_images": 1,
+    "top1_correct": 188,
+    "top1_accuracy": 0.8584474885844748,
+    "top3_correct": 195,
+    "top3_accuracy": 0.8904109589041096,
+    "devices_evaluated": 22
+}
