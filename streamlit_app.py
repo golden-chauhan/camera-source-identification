@@ -355,7 +355,7 @@ def display_predictions(
 
 with st.sidebar:
 
-    st.title("ðŸ“· Camera ID")
+    st.title("CamTrace")
 
     st.caption(
         "AI-Based Camera Model and Individual "
