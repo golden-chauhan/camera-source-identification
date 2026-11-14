@@ -11,7 +11,7 @@ from noise_residual import extract_noise_residual
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-FINGERPRINT_DIR = PROJECT_ROOT / "prnu" / "fingerprints"
+FINGERPRINT_DIR = PROJECT_ROOT / "prnu" / "fingerprints_deploy"
 
 CROP_SIZE = 512
 PCE_EXCLUSION_RADIUS = 5

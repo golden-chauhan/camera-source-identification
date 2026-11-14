@@ -29,7 +29,7 @@ CHECKPOINT_PATH = (
     / "best_deit_tiny_balanced_finetune.pth"
 )
 
-FINGERPRINT_DIR = EXPERIMENT_DIR / "prnu" / "fingerprints"
+FINGERPRINT_DIR = EXPERIMENT_DIR / "prnu" / "fingerprints_deploy"
 
 sys.path.insert(0, str(SRC_DIR))
 sys.path.insert(0, str(PRNU_SRC_DIR))
