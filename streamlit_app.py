@@ -50,14 +50,17 @@ from fusion import (
     normalize_prnu
 )
 
+# Separate experimental PRNU-only registered-device matcher.
+import individual_device_experiment as individual_prnu
+
 
 # ============================================================
 # CONFIGURATION
 # ============================================================
 
 st.set_page_config(
-    page_title="Camera Source Identification",
-    page_icon="ðŸ“·",
+    page_title="CamTrace AI",
+    page_icon="🔍",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -355,7 +358,7 @@ def display_predictions(
 
 with st.sidebar:
 
-    st.title("CamTrace")
+    st.title("CamTrace AI")
 
     st.caption(
         "AI-Based Camera Model and Individual "
@@ -369,6 +372,7 @@ with st.sidebar:
         [
             "Image Analysis",
             "Model Performance",
+            "Individual Device PRNU",
             "About Project"
         ]
     )
@@ -400,7 +404,7 @@ with st.sidebar:
 st.markdown(
     """
     <div class="hero">
-        <h1>Camera Source Identification</h1>
+        <h1>CamTrace AI</h1>
         <p>
             Identify the camera model and source device
             using Deep Learning and Photo Response
@@ -756,12 +760,142 @@ elif page == "Model Performance":
 
         st.divider()
 
+    st.markdown("### Experimental Individual-Device PRNU Matching")
+    exp_col1, exp_col2 = st.columns(2)
+    exp_col1.metric("Top-1 Accuracy", "89.98%")
+    exp_col2.metric("Top-3 Accuracy", "93.79%")
+    st.caption(
+        "499 successfully evaluated query images across 22 known VISION device "
+        "classes; one corrupted query image was excluded. This is a separate "
+        "experimental PRNU-only result, not the DeiT + PRNU fusion result."
+    )
+    st.warning(
+        "Closed-set experimental matching only. PCE scores are ranking statistics, "
+        "not calibrated probabilities or forensic proof of physical-device identity."
+    )
+    st.divider()
+
     st.subheader("Fusion Configuration")
 
     st.write("DeiT weight: 65%")
     st.write("PRNU weight: 35%")
     st.write("Test images: 500")
     st.write("Device classes: 22")
+
+
+# ============================================================
+# INDIVIDUAL DEVICE PRNU PAGE (EXPERIMENTAL)
+# ============================================================
+
+elif page == "Individual Device PRNU":
+
+    st.subheader("Registered Device Matching — Experimental")
+    st.write(
+        "Upload an image and compare its PRNU residual against 22 reference "
+        "fingerprints generated from the separate 1,100-image reference subset. "
+        "This experiment is independent of the DeiT + PRNU fusion prediction."
+    )
+    st.warning(
+        "Closed-set experiment: the image is ranked only against 22 registered "
+        "VISION device classes. PCE is a matching statistic, not a probability "
+        "or forensic-grade attribution. Unknown-device rejection is not implemented."
+    )
+
+    individual_uploaded = st.file_uploader(
+        "Upload a query image for individual-device PRNU matching",
+        type=["jpg", "jpeg", "png", "tif", "tiff"],
+        key="individual_device_upload"
+    )
+
+    if individual_uploaded is not None:
+        try:
+            individual_image = Image.open(individual_uploaded).convert("RGB")
+            image_col, details_col = st.columns([1, 1])
+            with image_col:
+                st.image(individual_image, caption="Query image", use_container_width=True)
+                st.caption(
+                    f"Dimensions: {individual_image.width} × "
+                    f"{individual_image.height} pixels"
+                )
+            with details_col:
+                st.markdown("### Experiment details")
+                st.write("Reference fingerprints: 22")
+                st.write("Reference subset: 1,100 images")
+                st.write("Evaluation subset: 499 valid query images")
+                st.write("Matching: PRNU residual + PCE/NCC ranking")
+                st.write("Crop: 512 × 512, without resizing")
+
+            run_individual = st.button(
+                "Run Individual Device Matching",
+                type="primary",
+                use_container_width=True,
+                key="run_individual_prnu"
+            )
+
+            if run_individual:
+                temporary_individual_path = None
+                try:
+                    with st.spinner("Extracting PRNU and comparing 22 fingerprints..."):
+                        if not individual_prnu.FINGERPRINT_ROOT.exists():
+                            raise FileNotFoundError(
+                                "Experimental fingerprints folder is missing: "
+                                f"{individual_prnu.FINGERPRINT_ROOT}"
+                            )
+                        fingerprints = individual_prnu.load_fingerprints()
+                        if len(fingerprints) != 22:
+                            raise RuntimeError(
+                                f"Expected 22 fingerprints; loaded {len(fingerprints)}."
+                            )
+
+                        suffix = Path(individual_uploaded.name).suffix.lower() or ".jpg"
+                        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                            tmp.write(individual_uploaded.getvalue())
+                            temporary_individual_path = Path(tmp.name)
+
+                        ranked_matches = individual_prnu.identify(
+                            temporary_individual_path, fingerprints
+                        )
+
+                    if not ranked_matches:
+                        st.error("No compatible registered fingerprints were found.")
+                    else:
+                        st.divider()
+                        st.subheader("Registered Device Match Results")
+                        best = ranked_matches[0]
+                        best_col, score_col = st.columns(2)
+                        best_col.metric("Top matching candidate", best["device"])
+                        score_col.metric("Top candidate PCE", f"{best['pce']:.6f}")
+
+                        st.markdown("### Top-3 registered candidates")
+                        for rank, item in enumerate(ranked_matches[:3], start=1):
+                            st.write(f"**{rank}. {item['device']}**")
+                            st.caption(
+                                f"PCE: {item['pce']:.6f} | NCC: {item['ncc']:.6f}"
+                            )
+
+                        st.markdown("### Full ranking")
+                        ranking_table = (
+                            "| Rank | Device | PCE | NCC |\n"
+                            "|---:|---|---:|---:|\n"
+                            + "\n".join(
+                                f"| {rank} | {item['device']} | "
+                                f"{item['pce']:.6f} | {item['ncc']:.6f} |"
+                                for rank, item in enumerate(ranked_matches, start=1)
+                            )
+                        )
+                        st.markdown(ranking_table)
+                        st.info(
+                            "The first row is the highest-scoring registered candidate. "
+                            "A high PCE score alone does not establish identity."
+                        )
+                except Exception as error:
+                    st.error(f"Individual-device matching failed: {error}")
+                    st.exception(error)
+                finally:
+                    if temporary_individual_path is not None:
+                        temporary_individual_path.unlink(missing_ok=True)
+        except Exception as error:
+            st.error(f"Could not read the uploaded image: {error}")
 
 
 # ============================================================
@@ -795,6 +929,12 @@ elif page == "About Project":
         The normalized scores from both branches are
         combined using validation-selected weights:
         65% DeiT and 35% PRNU.
+
+        **4. Experimental Registered-Device PRNU Matching**
+
+        A separate PRNU-only demonstration compares uploaded images
+        against 22 reference fingerprints. It is a closed-set experiment
+        and has not established forensic-grade physical-device attribution.
         """
     )
 
