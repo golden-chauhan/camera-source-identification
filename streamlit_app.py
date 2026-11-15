@@ -955,15 +955,6 @@ elif page == "About Project":
         """
     )
 
-    st.subheader("Research Limitation")
-
-    st.warning(
-        "The model identifies among the 22 device classes "
-        "represented in its training dataset. It has not "
-        "yet been validated for previously unseen camera "
-        "devices or forensic-grade attribution."
-    )
-
 
 # ============================================================
 # FOOTER
